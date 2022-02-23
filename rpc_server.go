@@ -376,6 +376,7 @@ func (s *SourceControl) WaitForStopTestingOnly(dummy *string, reply *bool) error
 type WriteControlConfig struct {
 	Request         string // "Start", "Stop", "Pause", or "Unpause", or "Unpause label"
 	Path            string // write in a new directory under this path
+	FilenamePattern string // Set the filename pattern
 	WriteLJH22      bool   // turn on one or more file formats
 	WriteOFF        bool
 	WriteLJH3       bool
