@@ -567,7 +567,6 @@ func (ds *AnySource) writeControlStart(config *WriteControlConfig) error {
 	if !(config.WriteLJH22 || config.WriteOFF || config.WriteLJH3) {
 		return fmt.Errorf("WriteLJH22 and WriteOFF and WriteLJH3 all false")
 	}
-
 	for _, dsp := range ds.processors {
 		if dsp.DataPublisher.HasLJH22() || dsp.DataPublisher.HasOFF() || dsp.DataPublisher.HasLJH3() {
 			return fmt.Errorf(
@@ -599,10 +598,12 @@ func (ds *AnySource) writeControlStart(config *WriteControlConfig) error {
 	if len(config.Path) > 0 {
 		path = config.Path
 	}
+
+	var filenamePattern string
 	var err error
 
 	if config.FilenamePattern == "" {
-		filenamePattern, err := makeDirectory(path)
+		filenamePattern, err = makeDirectory(path)
 		if err != nil {
 			return fmt.Errorf("could not make directory: %s", err.Error())
 		}
