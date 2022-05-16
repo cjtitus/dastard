@@ -641,10 +641,18 @@ func (ds *AnySource) writeControlStart(config *WriteControlConfig) error {
 	if len(config.Path) > 0 {
 		path = config.Path
 	}
+
+	var filenamePattern string
 	var err error
-	filenamePattern, err := makeDirectory(path)
-	if err != nil {
-		return fmt.Errorf("could not make directory: %s", err.Error())
+
+	if config.FilenamePattern == "" {
+		filenamePattern, err = makeDirectory(path)
+		if err != nil {
+			return fmt.Errorf("could not make directory: %s", err.Error())
+		}
+	} else {
+		log.Println("Using FilenamePattern instead of Path.")
+		filenamePattern = config.FilenamePattern
 	}
 
 	channelsWithOff := 0
