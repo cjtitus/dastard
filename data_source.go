@@ -470,16 +470,27 @@ func (ds *AnySource) ProcessSegments(block *dataBlock) error {
 	// and once every 20 reads, flush the output files (but do the files out of phase, so it's not
 	// done for all files at once).
 	tStart := time.Now()
+	
 	for idx, dsp := range ds.processors {
 		segment := block.segments[idx]
 		segment.processed = true
 		dsp.TrimStream()
 
 		if (idx+ds.readCounter)%20 == 0 {
-			dsp.Flush()
+			wg.Add(1)
+			go func(dsp *DataStreamProcessor) {
+				defer wg.Done()
+				// tChan := time.Now()
+				dsp.Flush()
+				// chanFlush := time.Since(tChan)
+				// if chanFlush > 50*time.Millisecond {
+				//	log.Println("chanFlush", idx, chanFlush)
+				//}
+			}(dsp)
 		}
 	}
 	ds.readCounter++
+	// wg.Wait()
 	flushDuration := time.Since(tStart)
 	if flushDuration > 50*time.Millisecond {
 		log.Println("flushDuration", flushDuration)

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"syscall"
 	"strings"
 	"time"
 
@@ -23,7 +24,7 @@ const BUFIOSIZE = 65536
 const WRITECHANCAPACITY = 1000
 
 // Flush the ouputfile regularly at this interval
-const FLUSHINTERVAL = 3 * time.Second
+const FLUSHINTERVAL = 500 * time.Millisecond
 
 // PulseRecord is the interface for individual pulse records
 type PulseRecord struct {
@@ -148,7 +149,8 @@ func extractFloat(line, pattern string, f *float64) bool {
 // you can't write records without doing this
 func (w *Writer) CreateFile() error {
 	if w.file == nil {
-		file, err := os.Create(w.FileName)
+		//file, err := os.Create(w.FileName)
+		file, err := os.OpenFile(w.FileName, syscall.O_RDWR | syscall.O_SYNC | syscall.O_TRUNC | syscall.O_SYNC, 0666)
 		if err != nil {
 			return err
 		}
@@ -213,7 +215,15 @@ Timebase: %e
 // Flush flushes buffered data to disk
 func (w Writer) Flush() {
 	if w.writer != nil {
+		//startFlush := time.Now()
 		w.writer.Flush()
+		//flushDuration := time.Since(startFlush)
+		//startSync := time.Now()
+		//w.file.Sync()
+		//syncDuration := time.Since(startSync)
+		//if flushDuration + syncDuration > 50 * time.Millisecond {
+		//	log.Printf("LJH22 Flush took %v, Sync took %v", flushDuration, syncDuration)
+		//}
 	}
 }
 
