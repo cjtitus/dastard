@@ -57,14 +57,11 @@ func makeFileExist(dir, filename string) (string, error) {
 
 // setupViper sets up the viper configuration manager: says where to find config
 // files and the filename and suffix. Sets some defaults.
-func setupViper() error {
+func setupViper(dastardBaseDir string) error {
 	viper.SetDefault("Verbose", false)
+	viper.Set("DastardBaseDir", dastardBaseDir)  // Set the base directory in Viper
 
-	HOME, err := os.UserHomeDir()
-	if err != nil { // Handle errors reading the config file
-		fmt.Printf("Error finding User Home Dir: %s\n", err)
-	}
-	dotDastard := filepath.Join(HOME, ".dastard")
+	dotDastard := filepath.Join(dastardBaseDir, ".dastard")
 	const filename string = "config"
 	const suffix string = ".yaml"
 	if _, err := makeFileExist(dotDastard, filename+suffix); err != nil {
@@ -75,7 +72,7 @@ func setupViper() error {
 	viper.AddConfigPath(filepath.FromSlash("/etc/dastard"))
 	viper.AddConfigPath(dotDastard)
 	viper.AddConfigPath(".")
-	err = viper.ReadInConfig() // Find and read the config file
+	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {            // Handle errors reading the config file
 		return fmt.Errorf("error reading config file: %s", err)
 	}
@@ -107,6 +104,7 @@ func main() {
 	printVersion := flag.Bool("version", false, "print version and quit")
 	cpuprofile := flag.String("cpuprofile", "", "write CPU profile to this file")
 	memprofile := flag.String("memprofile", "", "write memory profile to this file")
+	dastardBaseDir := flag.String("dastard-base-dir", "", "base directory for Dastard configurations and logs")
 	flag.Parse()
 
 	if *printVersion {
@@ -129,12 +127,17 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	// Start logging problems and updates to 2 log files.
-	HOME, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
+	// Determine the base directory
+	var err error
+	if *dastardBaseDir == "" {
+		*dastardBaseDir, err = os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
 	}
-	logdir := filepath.Join(HOME, ".dastard", "logs")
+
+	// Start logging problems and updates to 2 log files.
+	logdir := filepath.Join(*dastardBaseDir, ".dastard", "logs")
 	problemname, err := makeFileExist(logdir, "problems.log")
 	if err != nil {
 		panic(err)
@@ -150,7 +153,7 @@ func main() {
 	dastard.UpdateLogger.Printf("\n\n\n\n%s", banner)
 
 	// Find config file, creating it if needed, and read it.
-	if err := setupViper(); err != nil {
+	if err := setupViper(*dastardBaseDir); err != nil {
 		panic(err)
 	}
 

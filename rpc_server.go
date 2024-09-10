@@ -693,11 +693,15 @@ func (s *SourceControl) broadcastChannelNames() {
 
 func (s *SourceControl) storeChannelGroups() error {
 	if s.isSourceActive && s.status.Running {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
+		dastardBaseDir := viper.GetString("DastardBaseDir")
+		if dastardBaseDir == "" {
+			var err error
+			dastardBaseDir, err = os.UserHomeDir()
+			if err != nil {
+				return err
+			}
 		}
-		filename := path.Join(home, ".dastard", "channels.json")
+		filename := path.Join(dastardBaseDir, ".dastard", "channels.json")
 		fp, err := os.Create(filename)
 		if err != nil {
 			return err
