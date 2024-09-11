@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"syscall"
 
 	"github.com/usnistgov/dastard/getbytes"
 )
@@ -136,7 +137,9 @@ func extractFloat(line, pattern string, f *float64) bool {
 // you can't write records without doing this
 func (w *Writer) CreateFile() error {
 	if w.file == nil {
-		file, err := os.Create(w.FileName)
+		//file, err := os.Create(w.FileName)
+		file, err := os.OpenFile(w.FileName, syscall.O_RDWR | syscall.O_SYNC | syscall.O_TRUNC | syscall.O_SYNC, 0666)
+
 		if err != nil {
 			return err
 		}
