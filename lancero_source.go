@@ -8,11 +8,12 @@ import (
 	"math"
 	"os"
 	"os/signal"
-	"os/user"
+
 	"path/filepath"
 	"sort"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/usnistgov/dastard/lancero"
 )
@@ -159,6 +160,8 @@ func (ls *LanceroSource) Configure(config *LanceroSourceConfig) (err error) {
 	}
 	sort.Ints(config.DastardOutput.AvailableCards)
 
+	cringeGlobalsPath := cringeGlobalsCalculatePath()
+	
 	var cg cringeGlobals
 	cg, err = cringeGlobalsRead(cringeGlobalsPath)
 	if err != nil {
@@ -491,17 +494,27 @@ type cringeGlobals struct {
 
 // cringeGlobalsPath calculate the path to ~/.cringe/cringeGlobals.json by expanding the ~
 func cringeGlobalsCalculatePath() string {
-	usr, err := user.Current()
-	if err != nil {
-		panic(err) // I don't have a plan to handle this error meaningfully, so just panic, we can always change it later if we figure out how to deal with it
+	// usr, err := user.Current()
+	//if err != nil {
+	//	panic(err) // I don't have a plan to handle this error meaningfully, so just panic, we can always change it later if we figure out how to deal with it
+	//}
+	//dir := usr.HomeDir
+	var dastardBaseDir string
+	dastardBaseDir = viper.GetString("DastardBaseDir")
+	//log.Println("dastardBaseDir", dastardBaseDir)
+	if dastardBaseDir == "" {
+		var err error
+		dastardBaseDir, err = os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
 	}
-	dir := usr.HomeDir
-	path := filepath.Join(dir, ".cringe", "cringeGlobals.json")
+
+	path := filepath.Join(dastardBaseDir, ".cringe", "cringeGlobals.json")
 	// log.Println("cringeGlobalsPath", path)
 	return path
 }
 
-var cringeGlobalsPath = cringeGlobalsCalculatePath()
 
 // cringeGlobalsRead loads the cringeGlobals.json file into a cringeGlobals struct
 func cringeGlobalsRead(jsonPath string) (cringeGlobals, error) {
