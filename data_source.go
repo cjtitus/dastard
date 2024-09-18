@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	"github.com/usnistgov/dastard/getbytes"
 
 	"github.com/spf13/viper"
@@ -532,6 +531,26 @@ func (ds *AnySource) HandleExternalTriggers(externalTriggerRowcounts []int64) er
 	return nil
 }
 
+func makeDirectory2(basepath string) (string, error) {
+	if len(basepath) == 0 {
+		return "", fmt.Errorf("BasePath is the empty string")
+	}
+	today := time.Now().Format("20060102")
+
+	for i := 0; i < 10000; i++ {
+		thisDir := fmt.Sprintf("%s/%4.4d", basepath, i)
+		_, err := os.Stat(thisDir)
+		if os.IsNotExist(err) {
+			if err2 := os.MkdirAll(thisDir, 0755); err2 != nil {
+				return "", err
+			}
+			return fmt.Sprintf("%s/%s_run%4.4d_%%s.%%s", thisDir, today, i), nil
+		}
+	}
+	return "", fmt.Errorf("out of 4-digit ID numbers for today in %s", basepath)
+
+}
+
 // makeDirectory creates directory of the form basepath/20060102/0000 where
 // the 4-digit subdirectory counts separate file-writing occasions.
 // It also returns the formatting code for use in an Sprintf call
@@ -652,7 +671,12 @@ func (ds *AnySource) writeControlStart(config *WriteControlConfig) error {
 		}
 	} else {
 		log.Println("Using FilenamePattern instead of Path.")
-		filenamePattern = config.FilenamePattern
+		filenamePattern, err = makeDirectory2(config.FilenamePattern)
+		// err = os.MkdirAll(filepath.Dir(config.FilenamePattern), 0)
+		if err != nil {
+			return fmt.Errorf("could not make directory: %s", err.Error())
+		}
+		// filenamePattern = config.FilenamePattern
 	}
 
 	channelsWithOff := 0

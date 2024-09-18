@@ -207,6 +207,7 @@ func (dp *DataPublisher) PublishData(records []*DataRecord) error {
 			if !dp.LJH22.HeaderWritten { // MATTER doesn't create ljh files until at least one record exists, let us do the same
 				// if the file doesn't exists yet, create it and write header
 				err := dp.LJH22.CreateFile()
+				
 				if err != nil {
 					return err
 				}
